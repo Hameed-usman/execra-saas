@@ -1,0 +1,4 @@
+﻿.next/dev/types/validator.ts(99,31): error TS2344: Type 'typeof import("D:/WEB PROJECTS/execra/app/api/auth/[...nextauth]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/auth/[...nextauth]">'.
+  Types of property 'GET' are incompatible.
+    Type 'AppRouteHandlers' is not assignable to type '(request: NextRequest, context: { params: Promise<{ nextauth: string[]; }>; }) => void | Response | Promise<void | Response>'.
+      Type 'AppRouteHandlers' provides no match for the signature '(request: NextRequest, context: { params: Promise<{ nextauth: string[]; }>; }): void | Response | Promise<void | Response>'.
