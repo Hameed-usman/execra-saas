@@ -1,0 +1,34 @@
+﻿
+> execra@0.1.0 lint
+> eslint
+
+
+D:\WEB PROJECTS\execra\components\landing\Agents.tsx
+   7:6   warning  'AgentStatus' is defined but never used                                 @typescript-eslint/no-unused-vars
+  91:10  error    Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+D:\WEB PROJECTS\execra\components\landing\FAQ.tsx
+  38:10  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+D:\WEB PROJECTS\execra\components\landing\HowItWorks.tsx
+  34:10  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+  45:28  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`         react/no-unescaped-entities
+
+D:\WEB PROJECTS\execra\components\landing\Pricing.tsx
+  57:10  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+D:\WEB PROJECTS\execra\components\landing\Problem.tsx
+  24:10  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+  35:16  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`         react/no-unescaped-entities
+
+D:\WEB PROJECTS\execra\components\landing\Testimonials.tsx
+  33:10  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+  64:15  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`         react/no-unescaped-entities
+  64:28  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`         react/no-unescaped-entities
+
+D:\WEB PROJECTS\execra\components\layout\Navbar.tsx
+  3:27  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+  7:10  warning  'cn' is defined but never used         @typescript-eslint/no-unused-vars
+
+Γ£û 13 problems (10 errors, 3 warnings)
+
