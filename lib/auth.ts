@@ -36,20 +36,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
+        token.email = user.email;
         token.tenantId = (user as any).tenantId;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
+      if (session && session.user) {
+        (session.user as any).id = token.id;
+        (session.user as any).email = token.email;
         (session.user as any).tenantId = token.tenantId;
       }
       return session;
     }
   },
-  session: { strategy: "jwt" }
+  session: { strategy: "jwt" },
+  secret: process.env.NEXTAUTH_SECRET || "dev-secret-change-in-production"
 });

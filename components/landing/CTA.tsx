@@ -56,7 +56,7 @@ export const CTA = () => {
             transition={{ delay: 0.2 }}
           >
             <Link
-              href="#signup"
+              href="/signup"
               className="inline-flex rounded-full bg-[var(--accent-violet)] px-[32px] py-[16px] font-heading font-semibold text-[18px] text-[var(--text-base)] transition-all hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(var(--accent-violet-rgb),0.4)]"
             >
               Start free — no card needed

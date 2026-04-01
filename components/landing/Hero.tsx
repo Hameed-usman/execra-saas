@@ -17,7 +17,7 @@ const Counter = ({ value, duration = 1.5 }: { value: number; duration?: number }
     const animate = (currentTime: number) => {
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / (duration * 1000), 1);
-      
+
       // easeOutExpo
       const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       setCount(Math.floor(easeProgress * value));
@@ -42,7 +42,7 @@ const STATS = [
 
 export const Hero = () => {
   return (
-    <section 
+    <section
       className="relative min-h-screen flex flex-col items-center justify-center pt-32 pb-20 px-4 sm:px-6 w-full max-w-7xl mx-auto"
       aria-label="Hero Section"
     >
@@ -104,7 +104,7 @@ export const Hero = () => {
           className="flex flex-col sm:flex-row items-center gap-4 mb-16"
         >
           <Link
-            href="#signup"
+            href="/signup"
             className="rounded-full bg-[var(--accent-violet)] px-[28px] py-[14px] font-heading font-semibold text-[var(--text-base)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(var(--accent-violet-rgb),0.4)]"
           >
             Start free — no card needed
@@ -134,10 +134,10 @@ export const Hero = () => {
                   {stat.prefix}
                   {stat.isFloat ? (
                     <span ref={(node) => {
-                       if(node && node.textContent === "") {
-                         node.textContent = stat.value.toString();
-                         node.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1500 });
-                       }
+                      if (node && node.textContent === "") {
+                        node.textContent = stat.value.toString();
+                        node.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1500 });
+                      }
                     }}>{stat.value}</span>
                   ) : (
                     <Counter value={stat.value} duration={1.5} />
@@ -157,7 +157,7 @@ export const Hero = () => {
       </div>
 
       {/* Below the fold soft glow ellipse */}
-      <div 
+      <div
         className="absolute bottom-[-100px] left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-[100%] pointer-events-none"
         style={{
           background: "rgba(var(--accent-violet-rgb),0.15)",

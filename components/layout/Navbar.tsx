@@ -74,7 +74,7 @@ export const Navbar = () => {
           {/* CTA & Mobile Toggle */}
           <div className="flex items-center gap-4">
             <Link
-              href="#signup"
+              href="/signup"
               className="hidden sm:inline-flex items-center justify-center rounded-full bg-[var(--accent-violet)] px-6 py-2 text-sm font-semibold text-[var(--text-base)] transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(var(--accent-violet-rgb),0.4)]"
             >
               Get started
