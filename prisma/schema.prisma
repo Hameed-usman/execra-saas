@@ -13,6 +13,8 @@ model Tenant {
 
   users          User[]
   startupProfile StartupProfile?
+  connectedTools ConnectedTool[]
+  tasks          Task[]
 }
 
 model User {
@@ -39,4 +41,33 @@ model StartupProfile {
   createdAt   DateTime @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+model ConnectedTool {
+  id           String    @id @default(cuid())
+  tenantId     String
+  toolName     String
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  tenant       Tenant    @relation(fields: [tenantId], references: [id])
+  @@unique([tenantId, toolName])
+  @@map("connected_tools")
+}
+
+model Task {
+  id        String   @id @default(cuid())
+  tenantId  String
+  agentName String
+  goal      String
+  status    String   @default("pending_approval")
+  output    Json?
+  toEmail   String?
+  subject   String?
+  body      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  @@map("tasks")
 }

@@ -38,14 +38,27 @@ export default function OnboardingPage() {
   const handleFinish = async () => {
     setLoading(true);
     try {
-      await fetch("/api/onboarding", {
+      const response = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("[ONBOARDING_FAILED]", errorData);
+        alert(`Error: ${errorData.error || "Failed to save onboarding data"}`);
+        setLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("[ONBOARDING_SUCCESS]", data);
       setExplode(true);
       setTimeout(() => router.push("/dashboard"), 1600);
-    } catch {
+    } catch (error) {
+      console.error("[ONBOARDING_ERROR]", error);
+      alert("Network error. Please try again.");
       setLoading(false);
     }
   };

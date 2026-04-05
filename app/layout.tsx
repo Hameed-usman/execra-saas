@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Syne, DM_Sans } from "next/font/google";
 import "./globals.css";
+import Providers from "./providers";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -54,7 +55,9 @@ export default function RootLayout({
       <body
         className={`${syne.variable} ${dmSans.variable} font-sans antialiased text-white bg-[var(--bg-deep)] overflow-x-hidden`}
       >
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

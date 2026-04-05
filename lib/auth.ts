@@ -32,6 +32,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
     })
   ],
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
   },
@@ -53,6 +54,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     }
   },
-  session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET || "dev-secret-change-in-production"
+  session: { strategy: "jwt" }
 });
