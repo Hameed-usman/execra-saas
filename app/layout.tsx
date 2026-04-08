@@ -42,6 +42,8 @@ export const viewport = {
   themeColor: "var(--bg-deep)",
 };
 
+import { Toaster } from "@/components/ui/sonner";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -58,6 +60,7 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
+        <Toaster theme="dark" />
       </body>
     </html>
   );
