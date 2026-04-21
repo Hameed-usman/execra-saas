@@ -15,6 +15,7 @@ model Tenant {
   startupProfile StartupProfile?
   connectedTools ConnectedTool[]
   tasks          Task[]
+  agentTasks     AgentTask[]
 }
 
 model User {
@@ -70,4 +71,21 @@ model Task {
   updatedAt DateTime @updatedAt
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
   @@map("tasks")
+}
+
+model AgentTask {
+  id             String   @id @default(uuid())
+  tenantId       String
+  goal           String
+  agentType      String
+  status         String
+  output         Json?
+  criticFeedback String?
+  retryCount     Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("agent_tasks")
 }

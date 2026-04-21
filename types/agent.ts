@@ -1,0 +1,47 @@
+export type TaskStatus = 
+  | 'pending' 
+  | 'running' 
+  | 'approved' 
+  | 'retry' 
+  | 'failed' 
+  | 'sent' 
+  | 'partial'
+
+export type EmailDraft = {
+  to: string
+  subject: string
+  body: string
+  note?: string
+}
+
+export type SendResult = {
+  to: string
+  success: boolean
+  error?: string
+}
+
+export type AgentTask = {
+  task_id: string
+  status: TaskStatus
+  output: {
+    bd_agent?: EmailDraft[]
+    send_results?: SendResult[]
+  } | null
+  critic_feedback: string | null
+}
+
+export type ApproveResponse = {
+  total: number
+  sent: number
+  failed: number
+  skipped: number
+  results: SendResult[]
+  task_id: string
+}
+
+export type AgentRunResponse = {
+  task_id: string
+  status: TaskStatus
+  output: AgentTask['output']
+  critic_feedback: string | null
+}
