@@ -1,11 +1,31 @@
-import { db } from './lib/db';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 async function main() {
-  const tasks = await db.agentTask.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: 5
+  console.log('--- Checking Connected Tools ---');
+  const tools = await prisma.connectedTool.findMany({
+    select: {
+      tenantId: true,
+      toolName: true,
+      createdAt: true,
+      expiresAt: true,
+    }
   });
-  console.dir(tasks, { depth: null });
+
+  if (tools.length === 0) {
+    console.log('No tools connected yet.');
+  } else {
+    console.table(tools);
+    console.log('✅ Found connected tool(s) in the database.');
+  }
 }
 
-main().catch(console.error).finally(() => process.exit(0));
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 export function AgentGoalInput() {
   const [goal, setGoal] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { isRunning, setRunning, setCurrentRunId } = useAgentStore();
+  const { isRunning, setRunning, setCurrentRunId, setCurrentGoal } = useAgentStore();
 
   const charCount = goal.length;
   const isOverLimit = charCount > 500;
@@ -27,6 +27,7 @@ export function AgentGoalInput() {
       
       if (response.data.task_id) {
         setCurrentRunId(response.data.task_id);
+        setCurrentGoal(goal);
         setRunning(true);
         setGoal('');
         toast.success('Agent started successfully!');

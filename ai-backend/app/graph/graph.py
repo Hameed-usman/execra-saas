@@ -14,14 +14,20 @@ def route_planner(state: AgentState) -> str:
 
 def route_critic(state: AgentState) -> str:
     status = state.get('status')
-    if status in ['approved', 'failed']:
-        return END
-    
     retry_count = state.get('retry_count', 0)
-    if retry_count < 3:
-        return "bd_agent"
     
-    return END
+    if status == 'approved':
+        return END
+    elif status == 'retry':
+        if retry_count < 3:
+            return "bd_agent"
+        else:
+            return END
+    elif status == 'failed':
+        return END
+    else:
+        # Default fallback
+        return END
 
 def route_bd(state: AgentState) -> str:
     if state.get("status") == "failed":

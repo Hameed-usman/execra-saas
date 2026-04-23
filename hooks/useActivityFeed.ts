@@ -9,7 +9,7 @@ export function useActivityFeed() {
       const response = await axios.get('/api/tasks');
       return response.data;
     },
-    refetchInterval: 3000,
+    refetchInterval: 30000,
   });
 
   return { tasks, isLoading, error, refetch };

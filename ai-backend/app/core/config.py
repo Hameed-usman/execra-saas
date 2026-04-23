@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENROUTER_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
+    DEEPSEEK_API_KEY: str = ""
     GROQ_API_KEY: str = ""
     LLM_PROVIDER: str = "openrouter"
     TAVILY_API_KEY: str = ""
@@ -27,6 +28,9 @@ class Settings(BaseSettings):
     # We still keep these around just in case
     RESEND_API_KEY: str = ""
     RESEND_SENDER_EMAIL: str = ""
+    ENCRYPTION_KEY: str = ""
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
 
     class Config:
         env_file = ".env"
@@ -79,6 +83,12 @@ def get_llm(role: str) -> Any:
         }
         model = model_map.get(role, "llama-3.1-8b-instant")
         return ChatGroq(model=model, api_key=settings.GROQ_API_KEY)
+    
+    elif provider == "deepseek":
+        base_url = "https://api.deepseek.com"
+        api_key = settings.DEEPSEEK_API_KEY
+        model = "deepseek-chat"
+        return ChatOpenAI(model=model, api_key=api_key, base_url=base_url, max_retries=3, request_timeout=120)
 
     else:
         raise ValueError(f"Unknown LLM_PROVIDER: {provider}")

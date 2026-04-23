@@ -33,15 +33,24 @@ async def planner(state: AgentState) -> AgentState:
         parsed_data = json.loads(cleaned)
         
         state['sub_tasks'] = parsed_data.get("tasks", [])
+        
+        # Guard: if no tasks were parsed, fail immediately
+        if not state['sub_tasks']:
+            print(f"[EXECRA PLANNER] ERROR: LLM returned 0 tasks. Failing immediately.")
+            state['status'] = 'failed'
+            state['final_output'] = 'Planner generated 0 tasks — goal may be too vague'
+            return state
+        
         state['current_agent'] = 'bd_agent'
         state['status'] = 'running'
         print(f"[EXECRA PLANNER] Generated {len(state['sub_tasks'])} tasks.")
         
     except Exception as e:
-        print(f"[EXECRA PLANNER] Error: {str(e)}")
-        # Debugging raw output error fallback
-        if 'response' in locals() and hasattr(response, 'content'):
-            print(f"[EXECRA PLANNER] Raw Output: {response.content}")
+        error_msg = str(e)
+        if "402" in error_msg:
+            error_msg = "LLM Provider Error: Insufficient Balance. Please check your DeepSeek API credits."
+        print(f"[EXECRA PLANNER] Error: {error_msg}")
         state['status'] = 'failed'
+        state['final_output'] = error_msg
         
     return state

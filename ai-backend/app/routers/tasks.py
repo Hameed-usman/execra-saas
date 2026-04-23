@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import Optional, List, Dict, Any
@@ -7,18 +7,25 @@ from sqlalchemy.orm.attributes import flag_modified
 from app.core.database import get_db
 from app.models.task import AgentTask
 from app.tools.email_tool import send_email
+from app.core.config import settings
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 class TaskResponse(BaseModel):
-    id: str
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+    
+    task_id: str = Field(validation_alias='id')
     tenantId: str
     goal: str
     agentType: str
     status: str
     output: Optional[Dict[str, Any]] = None
-    criticFeedback: Optional[str] = None
+    critic_feedback: Optional[str] = Field(None, alias='criticFeedback')
     retryCount: int
+
+class UpdateTaskRequest(BaseModel):
+    output: Dict[str, Any]
+
 
 class ApproveResponse(BaseModel):
     total: int
@@ -85,7 +92,63 @@ async def approve_task(task_id: str, db: AsyncSession = Depends(get_db)):
     emails = task.output["bd_agent"]
     results = []
     
-    # Gmail sending added in Chunk 5 — n8n replaced with direct SMTP (using Resend instead of SMTP per updated plan)
+    # Fetch Gmail token for this tenant
+    from app.models.task import ConnectedTool
+    from app.core.encryption import decrypt_token
+    
+    tool_result = await db.execute(
+        select(ConnectedTool).where(
+            ConnectedTool.tenantId == task.tenantId,
+            ConnectedTool.toolName == "gmail"
+        )
+    )
+    connected_tool = tool_result.scalars().first()
+    
+    token = None
+    if connected_tool:
+        try:
+            token = decrypt_token(connected_tool.accessToken)
+            
+            # Refresh token logic
+            if connected_tool.refreshToken and connected_tool.expiresAt:
+                from datetime import datetime, timezone
+                # Convert expiresAt to UTC if it's naive
+                expires_at = connected_tool.expiresAt
+                if expires_at.tzinfo is None:
+                    expires_at = expires_at.replace(tzinfo=timezone.utc)
+                
+                if expires_at < datetime.now(timezone.utc):
+                    print(f"[EXECRA GMAIL] Token expired, attempting refresh for tenant {task.tenantId}")
+                    try:
+                        import httpx
+                        refresh_url = "https://oauth2.googleapis.com/token"
+                        refresh_data = {
+                            "client_id": settings.GOOGLE_CLIENT_ID,
+                            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                            "refresh_token": decrypt_token(connected_tool.refreshToken),
+                            "grant_type": "refresh_token",
+                        }
+                        async with httpx.AsyncClient() as client:
+                            refresh_res = await client.post(refresh_url, data=refresh_data)
+                            if refresh_res.status_code == 200:
+                                new_data = refresh_res.json()
+                                token = new_data["access_token"]
+                                # Update DB with new token
+                                from app.core.encryption import encrypt_token
+                                connected_tool.accessToken = encrypt_token(token)
+                                if "expires_in" in new_data:
+                                    from datetime import timedelta
+                                    connected_tool.expiresAt = datetime.utcnow() + timedelta(seconds=new_data["expires_in"])
+                                await db.commit()
+                                print(f"[EXECRA GMAIL] Token refreshed successfully")
+                            else:
+                                print(f"[EXECRA GMAIL] Token refresh failed: {refresh_res.text}")
+                    except Exception as re:
+                        print(f"[EXECRA GMAIL] Error during token refresh: {re}")
+        except Exception as e:
+            print(f"[EXECRA GMAIL] Token processing failed: {e}")
+
+    # Gmail sending updated to use OAuth token if available
     for email in emails:
         to = email.get("to")
         subject = email.get("subject", "No Subject")
@@ -99,7 +162,8 @@ async def approve_task(task_id: str, db: AsyncSession = Depends(get_db)):
                 "error": "skipped_placeholder"
             })
         else:
-            send_result = await send_email(to, subject, body)
+            # Pass token to send_email so it can choose OAuth or SMTP
+            send_result = await send_email(to, subject, body, token=token)
             results.append(send_result)
 
     sent = sum(1 for r in results if r.get("success", False))
@@ -131,3 +195,17 @@ async def approve_task(task_id: str, db: AsyncSession = Depends(get_db)):
         results=results,
         task_id=task_id
     )
+
+@router.patch("/{task_id}", response_model=TaskResponse)
+async def update_task(task_id: str, request: UpdateTaskRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(AgentTask).where(AgentTask.id == task_id))
+    task = result.scalars().first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task.output = request.output
+    flag_modified(task, "output")
+    await db.commit()
+    await db.refresh(task)
+    return task
+

@@ -130,8 +130,12 @@ async def bd_agent(state: AgentState) -> AgentState:
             return state
             
     except Exception as e:
-        print(f"[EXECRA BD AGENT] Tavily search failed: {str(e)}")
+        error_msg = str(e)
+        if "402" in error_msg:
+            error_msg = "LLM Provider Error: Insufficient Balance. Please check your DeepSeek API credits."
+        print(f"[EXECRA BD AGENT] Error: {error_msg}")
         state['status'] = 'failed'
+        state['final_output'] = error_msg
         return state
         
     llm = get_llm("bd")
@@ -175,6 +179,14 @@ async def bd_agent(state: AgentState) -> AgentState:
             
             cleaned = clean_llm_json(raw)
             parsed_email = json.loads(cleaned)
+            
+            # Post-processing: Replace common placeholders with fallback
+            body = parsed_email.get('body', '')
+            if "[Name]" in body or "[investor name]" in body.lower():
+                body = body.replace("[Name]", "Hi there").replace("[investor name]", "Hi there")
+            
+            parsed_email['body'] = body
+            
             drafted_emails.append(parsed_email)
             print(f"[EXECRA BD AGENT] Email drafted — Subject: {parsed_email.get('subject', 'N/A')}")
             
@@ -184,6 +196,14 @@ async def bd_agent(state: AgentState) -> AgentState:
         except Exception as e:
             print(f"[EXECRA BD AGENT] Skipping investor — error: {str(e)}")
             continue
+
+    # Guard: if no emails were drafted successfully, fail immediately
+    if len(drafted_emails) == 0:
+        print(f"[EXECRA BD AGENT] ERROR: No emails drafted. Setting status to failed.")
+        state['status'] = 'failed'
+        state['final_output'] = 'BD Agent failed to draft any emails'
+        state['agent_outputs']['bd_agent'] = []
+        return state
 
     state['agent_outputs']['bd_agent'] = drafted_emails
     

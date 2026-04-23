@@ -22,12 +22,17 @@ export type SendResult = {
 
 export type AgentTask = {
   task_id: string
+  createdAt: string
+  tenantId: string
+  goal: string
+  agentType: string
   status: TaskStatus
   output: {
     bd_agent?: EmailDraft[]
     send_results?: SendResult[]
   } | null
   critic_feedback: string | null
+  retryCount: number
 }
 
 export type ApproveResponse = {

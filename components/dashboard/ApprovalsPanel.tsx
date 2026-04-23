@@ -7,41 +7,58 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Send, ChevronDown, ChevronUp, Mail, AlertCircle, Sparkles, Info } from 'lucide-react';
+import { Loader2, Send, ChevronDown, ChevronUp, Mail, AlertCircle, Sparkles, Info, Edit2, X, Check } from 'lucide-react';
 import axios from 'axios';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 export function ApprovalsPanel() {
-  const [latestTask, setLatestTask] = useState<AgentTask | null>(null);
   const [isApproving, setIsApproving] = useState(false);
   const [expandedEmails, setExpandedEmails] = useState<Record<string, boolean>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const { setRunning } = useAgentStore();
-
-  const fetchLatestTask = async () => {
-    try {
-      const response = await axios.get('/api/agent-tasks', { withCredentials: true });
-      const tasks = response.data as AgentTask[];
-      if (tasks.length > 0 && tasks[0].status === 'approved') {
-        setLatestTask(tasks[0]);
-      } else {
-        setLatestTask(null);
-      }
-    } catch (error) {
-      console.error('[FETCH_APPROVALS_ERROR]', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLatestTask();
-    const interval = setInterval(fetchLatestTask, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const { isRunning, setRunning, latestTask, setLatestTask } = useAgentStore();
 
   const toggleExpand = (to: string) => {
     setExpandedEmails(prev => ({ ...prev, [to]: !prev[to] }));
+  };
+
+  const startEdit = (index: number, currentTo: string) => {
+    setEditingIndex(index);
+    setEditValue(currentTo === 'research-needed@placeholder.com' ? '' : currentTo);
+  };
+
+  const handleSaveEdit = async (index: number) => {
+    if (!latestTask) return;
+    if (!editValue.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const newBdAgent = [...(latestTask.output?.bd_agent || [])];
+      newBdAgent[index] = { ...newBdAgent[index], to: editValue };
+
+      await axios.patch(`/api/agent-tasks/${latestTask.task_id}`, {
+        output: { ...latestTask.output, bd_agent: newBdAgent }
+      }, { withCredentials: true });
+
+      toast.success('Recipient updated');
+      setEditingIndex(null);
+      
+      // Update local state in store
+      setLatestTask({
+        ...latestTask,
+        output: { ...latestTask.output, bd_agent: newBdAgent }
+      });
+    } catch (error) {
+      console.error('[SAVE_EDIT_ERROR]', error);
+      toast.error('Failed to update recipient');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleApproveAll = async () => {
@@ -69,11 +86,11 @@ export function ApprovalsPanel() {
     }
   };
 
-  if (isLoading || !latestTask || latestTask.status !== 'approved') return null;
+  if (!latestTask || (latestTask.status !== 'approved' && latestTask.status !== 'pending_approval')) return null;
 
   const emails = latestTask.output?.bd_agent || [];
-  const realEmails = emails.filter(e => e.to !== 'research-needed@placeholder.com');
-  const placeholderCount = emails.length - realEmails.length;
+  const hasPlaceholders = emails.some(e => e.to === 'research-needed@placeholder.com');
+  const readyCount = emails.filter(e => e.to !== 'research-needed@placeholder.com').length;
 
   if (emails.length === 0) {
     return (
@@ -93,65 +110,143 @@ export function ApprovalsPanel() {
           </div>
           <h2 className="text-xl font-semibold text-slate-100 font-syne">Review Drafted Emails</h2>
           <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-            {realEmails.length} Ready
+            {readyCount} Ready
           </Badge>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {realEmails.map((email, idx) => (
-          <Card key={idx} className="bg-slate-900/40 border-slate-800/80 hover:border-slate-700/80 transition-all overflow-hidden group">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1 flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Mail className="h-3.5 w-3.5 text-slate-500" />
-                    <span className="text-sm font-bold text-slate-200 truncate">{email.to}</span>
-                  </div>
-                  <h4 className="text-xs font-medium text-slate-400 line-clamp-1 italic px-2 border-l border-violet-500/30">
-                    Subject: {email.subject}
-                  </h4>
-                  
-                  {expandedEmails[email.to] ? (
-                    <div className="mt-4 p-4 rounded-lg bg-slate-950/80 border border-slate-800/50 max-h-[200px] overflow-y-auto custom-scrollbar anim-in slide-in-from-top-2 duration-300">
-                      <p className="text-xs leading-relaxed text-slate-300 whitespace-pre-wrap">{email.body}</p>
+        {emails.map((email, idx) => {
+          const isPlaceholder = email.to === 'research-needed@placeholder.com';
+          const isEditing = editingIndex === idx;
+
+          return (
+            <Card key={idx} className={cn(
+              "bg-slate-900/40 border-slate-800/80 hover:border-slate-700/80 transition-all overflow-hidden group",
+              isPlaceholder && !isEditing && "border-amber-500/20 bg-amber-500/5"
+            )}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Mail className={cn(
+                        "h-3.5 w-3.5",
+                        isPlaceholder ? "text-amber-500" : "text-slate-500"
+                      )} />
+                      
+                      {isPlaceholder ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input 
+                            value={editingIndex === idx ? editValue : ''}
+                            onChange={(e) => {
+                              setEditingIndex(idx);
+                              setEditValue(e.target.value);
+                            }}
+                            placeholder="Enter friend/investor email..."
+                            className="h-9 bg-slate-950 border-amber-500/30 text-sm focus-visible:ring-amber-500/50"
+                          />
+                          <Button 
+                            size="sm" 
+                            className="bg-amber-600 hover:bg-amber-500 text-white h-9 px-4 font-bold shrink-0" 
+                            onClick={() => {
+                              setEditValue(editValue); // Ensure we use current value
+                              handleSaveEdit(idx);
+                            }} 
+                            disabled={isSaving || (editingIndex === idx && !editValue)}
+                          >
+                            {isSaving && editingIndex === idx ? <Loader2 className="h-3 w-3 animate-spin" /> : "Set Email"}
+                          </Button>
+                        </div>
+                      ) : isEditing ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input 
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            placeholder="Enter investor email..."
+                            className="h-8 bg-slate-950 border-slate-700 text-sm"
+                            autoFocus
+                          />
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-500" onClick={() => handleSaveEdit(idx)} disabled={isSaving}>
+                            {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-4 w-4" />}
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500" onClick={() => setEditingIndex(null)}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 group/to overflow-hidden">
+                          <span className="text-sm font-bold truncate text-slate-200">
+                            {email.to}
+                          </span>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => startEdit(idx, email.to)}
+                            className="h-6 w-6 opacity-0 group-hover/to:opacity-100 transition-opacity"
+                          >
+                            <Edit2 className="h-3 w-3 text-slate-500" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <p className="mt-2 text-xs text-slate-500 line-clamp-1 px-2 border-l border-slate-800">
-                      {email.body.substring(0, 100)}...
-                    </p>
-                  )}
+                    <h4 className="text-xs font-medium text-slate-400 line-clamp-1 italic px-2 border-l border-violet-500/30">
+                      Subject: {email.subject}
+                    </h4>
+                    
+                    {expandedEmails[email.to] ? (
+                      <div className="mt-4 p-4 rounded-lg bg-slate-950/80 border border-slate-800/50 max-h-[200px] overflow-y-auto custom-scrollbar anim-in slide-in-from-top-2 duration-300">
+                        <p className="text-xs leading-relaxed text-slate-300 whitespace-pre-wrap">{email.body}</p>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-500 line-clamp-1 px-2 border-l border-slate-800">
+                        {email.body.substring(0, 100)}...
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-col gap-2 shrink-0">
+                    {!isPlaceholder && (
+                      <Button 
+                        size="sm" 
+                        className="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 h-8 font-bold"
+                        onClick={handleApproveAll} // Reusing the same logic for simplicity
+                        disabled={isApproving}
+                      >
+                        <Send className="h-3 w-3 mr-1.5" />
+                        Send Now
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => toggleExpand(email.to)}
+                      className="text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 h-8 px-2"
+                    >
+                      {expandedEmails[email.to] ? (
+                        <>
+                          <span className="text-[10px] mr-1">Hide</span>
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-[10px] mr-1">Preview</span>
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => toggleExpand(email.to)}
-                  className="ml-4 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 h-8 px-2"
-                >
-                  {expandedEmails[email.to] ? (
-                    <>
-                      <span className="text-[10px] mr-1">Hide</span>
-                      <ChevronUp className="h-3.5 w-3.5" />
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-[10px] mr-1">View Full Email</span>
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {placeholderCount > 0 && (
-        <div className="bg-blue-500/5 border border-blue-500/10 rounded-lg p-3 flex items-center gap-3">
-          <Info className="h-4 w-4 text-blue-500" />
-          <p className="text-xs text-blue-400/80 italic">
-            {placeholderCount} emails need manual research — investor addresses not found
+      {hasPlaceholders && (
+        <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-3 flex items-center gap-3">
+          <AlertCircle className="h-4 w-4 text-amber-500" />
+          <p className="text-xs text-amber-400/80 italic">
+            Some drafts need email addresses. Click the edit icon to provide one.
           </p>
         </div>
       )}

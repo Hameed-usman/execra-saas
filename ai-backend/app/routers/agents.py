@@ -58,6 +58,9 @@ async def run_agent(request: RunAgentRequest, background_tasks: BackgroundTasks,
     )
 
 async def process_agent_graph(task_id: str, initial_state: dict):
+    print(f"[EXECRA BACKGROUND] Starting graph for task {task_id}")
+    print(f"[EXECRA BACKGROUND] Initial state: {initial_state}")
+    
     from app.core.database import AsyncSessionLocal
     
     # Pre-emptively set status to running
@@ -70,6 +73,7 @@ async def process_agent_graph(task_id: str, initial_state: dict):
             
     try:
         final_state = await compiled_graph.ainvoke(initial_state)
+        print(f"[EXECRA BACKGROUND] Graph completed. Final state status: {final_state.get('status')}")
     except Exception as e:
         print(f"[EXECRA BACKGROUND] Graph failed: {str(e)}")
         final_state = {"status": "failed", "agent_outputs": {}, "critic_feedback": str(e)}

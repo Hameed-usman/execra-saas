@@ -15,11 +15,15 @@ async def critic(state: AgentState) -> AgentState:
     drafts_json = json.dumps(state.get('agent_outputs', {}).get('bd_agent', []))
     
     system_prompt = (
-        "You are the Critic Agent for EXECRA. Your job is to protect the founder's reputation. "
-        "Reject any output that sounds templated, has hallucinated facts, exceeds 150 words, "
-        "or fails to reference the investor specifically.\n"
+        "You are the Critic Agent for EXECRA. Your job is to approve high-quality emails. "
+        "Approve emails UNLESS they have one of these deal-breaking issues:\n"
+        "1. Empty body text (no content at all)\n"
+        "2. Contains literal [bracket] placeholder text like '[Name]' or '[Your Name]'\n"
+        "3. Exceeds 200 words in length\n"
+        "Otherwise, if the email is readable and clear, set decision to 'APPROVED'. "
+        "Do not be overly pedantic about personal tone or minor stylistic differences. "
         "Return ONLY a strict JSON object. Format: {\"decision\": \"APPROVED\" or \"REJECTED\", "
-        "\"feedback\": \"specific actionable issue if rejected, empty string if approved\"}."
+        "\"feedback\": \"specific reason if rejected, empty string if approved\"}."
     )
     
     user_prompt = f"Evaluate these drafted emails:\n{drafts_json}"

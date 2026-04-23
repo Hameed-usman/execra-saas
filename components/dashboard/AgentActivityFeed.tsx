@@ -15,10 +15,9 @@ const STATUS_TEXT = [
 
 export function AgentActivityFeed() {
   const [tasks, setTasks] = useState<AgentTask[]>([]);
-  const [latestTask, setLatestTask] = useState<AgentTask | null>(null);
   const [statusIndex, setStatusIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const { isRunning, setRunning, currentRunId } = useAgentStore();
+  const { isRunning, setRunning, latestTask, setLatestTask } = useAgentStore();
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchTasks = async () => {
@@ -33,17 +32,23 @@ export function AgentActivityFeed() {
 
         // Update global running state based on latest task
         if (latest.status === 'pending' || latest.status === 'running') {
-          setRunning(true);
+          // BUG 1 FIX: Only trigger spinner if task is NOT stale (less than 10 mins old)
+          const createdTime = new Date(latest.createdAt).getTime();
+          const now = new Date().getTime();
+          const diffMins = (now - createdTime) / (1000 * 60);
+          
+          if (diffMins < 10) {
+            setRunning(true);
+          } else {
+            console.log("[EXECRA] Latest task is stale (>10m), not auto-running.");
+            setRunning(false);
+          }
         } else {
           setRunning(false);
-          // If we were polling and it finished, clear interval
-          if (pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current);
-            pollIntervalRef.current = null;
-          }
         }
       } else {
         setRunning(false);
+        setLatestTask(null);
       }
     } catch (error) {
       console.error('[FETCH_AGENT_TASKS_ERROR]', error);
@@ -57,24 +62,27 @@ export function AgentActivityFeed() {
     fetchTasks();
   }, []);
 
-  // Polling logic
+  // Robust polling logic
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    const poll = async () => {
+      if (!isRunning) return;
+      
+      await fetchTasks();
+      
+      // Schedule next poll only if still running
+      if (isRunning) {
+        timeoutId = setTimeout(poll, 3000);
+      }
+    };
+
     if (isRunning) {
-      if (!pollIntervalRef.current) {
-        pollIntervalRef.current = setInterval(fetchTasks, 3000);
-      }
-    } else {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
+      poll();
     }
 
     return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [isRunning]);
 
@@ -174,7 +182,7 @@ export function AgentActivityFeed() {
           <div className="space-y-1">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Current AI Goal</h3>
             <p className="text-sm text-slate-200 font-medium line-clamp-1 italic">
-              "{latestTask?.critic_feedback ? "Rethinking..." : ""} {latestTask?.task_id?.substring(0, 8) ?? '...'}..."
+              "{latestTask?.critic_feedback ? "Rethinking..." : ""} {latestTask?.goal ?? '...'}..."
             </p>
           </div>
           <div className="flex-shrink-0">
