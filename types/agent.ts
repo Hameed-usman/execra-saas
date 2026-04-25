@@ -3,6 +3,7 @@ export type TaskStatus =
   | 'running' 
   | 'approved' 
   | 'retry' 
+  | 'waiting_for_input'
   | 'failed' 
   | 'sent' 
   | 'partial'
@@ -12,6 +13,9 @@ export type EmailDraft = {
   subject: string
   body: string
   note?: string
+  investor_name?: string
+  firm?: string
+  skipped?: boolean
 }
 
 export type SendResult = {
@@ -30,10 +34,13 @@ export type AgentTask = {
   output: {
     bd_agent?: EmailDraft[]
     send_results?: SendResult[]
+    step_log?: string[]
+    user_prompt?: string
   } | null
   critic_feedback: string | null
   retryCount: number
 }
+
 
 export type ApproveResponse = {
   total: number

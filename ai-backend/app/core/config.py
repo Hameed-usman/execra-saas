@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     ENCRYPTION_KEY: str = ""
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
+    PINECONE_API_KEY: str = ""
+    PINECONE_INDEX: str = "execra-memory1"
 
     class Config:
         env_file = ".env"

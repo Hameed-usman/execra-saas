@@ -8,6 +8,8 @@ from app.core.database import get_db
 from app.models.task import AgentTask
 from app.tools.email_tool import send_email
 from app.core.config import settings
+from app.memory.retriever import store_memory
+from datetime import datetime, timezone, timedelta
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
@@ -111,7 +113,6 @@ async def approve_task(task_id: str, db: AsyncSession = Depends(get_db)):
             
             # Refresh token logic
             if connected_tool.refreshToken and connected_tool.expiresAt:
-                from datetime import datetime, timezone
                 # Convert expiresAt to UTC if it's naive
                 expires_at = connected_tool.expiresAt
                 if expires_at.tzinfo is None:
@@ -137,7 +138,6 @@ async def approve_task(task_id: str, db: AsyncSession = Depends(get_db)):
                                 from app.core.encryption import encrypt_token
                                 connected_tool.accessToken = encrypt_token(token)
                                 if "expires_in" in new_data:
-                                    from datetime import timedelta
                                     connected_tool.expiresAt = datetime.utcnow() + timedelta(seconds=new_data["expires_in"])
                                 await db.commit()
                                 print(f"[EXECRA GMAIL] Token refreshed successfully")
@@ -165,6 +165,39 @@ async def approve_task(task_id: str, db: AsyncSession = Depends(get_db)):
             # Pass token to send_email so it can choose OAuth or SMTP
             send_result = await send_email(to, subject, body, token=token)
             results.append(send_result)
+
+            # CHANGE 2 — Memory Save After Email is Sent
+            if send_result.get("success", False):
+                try:
+                    investor_name = email.get("investor_name", "Unknown Investor")
+                    firm = email.get("firm", "Unknown Firm")
+                    
+                    content = (
+                        f"Contacted {investor_name} at {firm} via email on "
+                        f"{datetime.utcnow().isoformat()}. Subject: {subject}."
+                    )
+                    
+                    metadata = {
+                        "type": "investor_outreach",
+                        "investor_name": investor_name,
+                        "firm": firm,
+                        "email_address": to,
+                        "date": datetime.utcnow().isoformat(),
+                        "subject": subject
+                    }
+                    
+                    # Offload memory storage to background or await it? 
+                    # User said "immediately call store_memory". 
+                    # We'll await it but wrap in try/except as requested.
+                    await store_memory(
+                        tenant_id=task.tenantId,
+                        content=content,
+                        metadata=metadata
+                    )
+                    print(f"[EXECRA MEMORY] Interaction saved for {investor_name}")
+                except Exception as me:
+                    # CHANGE 3 — Graceful Failure Handling: log but do not crash
+                    print(f"[EXECRA MEMORY] Failed to save interaction: {me}")
 
     sent = sum(1 for r in results if r.get("success", False))
     failed = sum(1 for r in results if not r.get("success", False) and r.get("error") != "skipped_placeholder")
