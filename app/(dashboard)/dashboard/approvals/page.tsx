@@ -26,7 +26,7 @@ export default function ApprovalsPage() {
       const fetchedTasks = response.data as AgentTask[];
       // Filter for tasks that need approval
       const approvalTasks = fetchedTasks.filter(t => 
-        t.status === 'approved' || t.status === 'pending_approval'
+        (t.status as string) === 'approved' || (t.status as string) === 'pending_approval' || (t.status as string) === 'waiting_for_approval'
       );
       setTasks(approvalTasks);
     } catch (error) {
