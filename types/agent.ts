@@ -2,6 +2,8 @@ export type TaskStatus =
   | 'pending' 
   | 'running' 
   | 'approved' 
+  | 'pending_approval'
+  | 'waiting_for_approval'
   | 'retry' 
   | 'waiting_for_input'
   | 'failed' 
