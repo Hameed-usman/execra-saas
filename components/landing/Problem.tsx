@@ -22,7 +22,7 @@ export const Problem = () => {
           viewport={{ once: true, margin: "-100px" }}
           className="font-mono text-[13px] text-[var(--accent-violet)] mb-4 tracking-wider"
         >
-          {"// section — the problem"}
+          {`// section — the problem`}
         </m.div>
         <m.h2
           id="problem-heading"
@@ -32,7 +32,7 @@ export const Problem = () => {
           transition={{ delay: 0.1 }}
           className="font-heading font-extrabold text-[clamp(36px,5vw,64px)] text-[var(--text-base)] leading-[1.1] tracking-tight mb-4"
         >
-          AHMED&apos;S MONDAY IS <br className="hidden sm:block" />
+          {`AHMED'S MONDAY IS`} <br className="hidden sm:block" />
           KILLING HIS STARTUP.
         </m.h2>
         <m.p

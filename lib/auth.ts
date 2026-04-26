@@ -1,7 +1,27 @@
-import NextAuth from "next-auth";
+import NextAuth, { DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      tenantId: string;
+    } & DefaultSession["user"]
+  }
+
+  interface User {
+    tenantId: string;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    tenantId: string;
+  }
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -37,19 +57,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.tenantId = (user as any).tenantId;
+        token.id = user.id as string;
+        token.email = user.email as string;
+        token.tenantId = user.tenantId;
       }
       return token;
     },
     async session({ session, token }) {
       if (session && session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).email = token.email;
-        (session.user as any).tenantId = token.tenantId;
+        session.user.id = token.id;
+        session.user.email = token.email as string;
+        session.user.tenantId = token.tenantId;
       }
       return session;
     }

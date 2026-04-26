@@ -16,7 +16,7 @@ export const Pricing = () => {
           viewport={{ once: true, margin: "-100px" }}
           className="font-mono text-[13px] text-[var(--accent-violet)] mb-4 tracking-wider"
         >
-          {"// section — pricing"}
+          {`// section — pricing`}
         </motion.div>
         <motion.h2
           id="pricing-heading"

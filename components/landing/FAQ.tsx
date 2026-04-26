@@ -36,7 +36,7 @@ export const FAQ = () => {
           viewport={{ once: true, margin: "-100px" }}
           className="font-mono text-[13px] text-[var(--accent-violet)] mb-4 tracking-wider"
         >
-          {"// section — faq"}
+          {`// section — faq`}
         </m.div>
         <m.h2
           id="faq-heading"

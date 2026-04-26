@@ -31,7 +31,7 @@ export const Testimonials = () => {
           viewport={{ once: true, margin: "-100px" }}
           className="font-mono text-[13px] text-[var(--accent-violet)] mb-4 tracking-wider"
         >
-          {"// section — founder testimonials"}
+          {`// section — founder testimonials`}
         </m.div>
         <m.h2
           id="testimonials-heading"
@@ -61,7 +61,7 @@ export const Testimonials = () => {
             </div>
 
             <p className="font-sans text-[17px] leading-[1.7] text-[rgba(var(--text-base-rgb),0.85)] italic relative z-10 pt-8 mb-10">
-              &quot;{quote.text}&quot;
+              {`"${quote.text}"`}
             </p>
 
             <div className="flex items-center gap-4 border-t border-[rgba(var(--text-base-rgb),0.05)] pt-6">

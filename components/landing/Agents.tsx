@@ -89,7 +89,7 @@ export const Agents = () => {
           viewport={{ once: true, margin: "-100px" }}
           className="font-mono text-[13px] text-[var(--accent-violet)] mb-4 tracking-wider"
         >
-          {"// section — the six agents"}
+          {`// section — the six agents`}
         </m.div>
         <m.h2
           id="agents-heading"

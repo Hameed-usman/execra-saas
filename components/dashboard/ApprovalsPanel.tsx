@@ -86,7 +86,7 @@ export function ApprovalsPanel() {
     }
   };
 
-  if (!latestTask || !(['approved', 'pending_approval', 'waiting_for_input'] as string[]).includes(latestTask.status)) return null;
+  if (!latestTask || !(['approved', 'pending_approval', 'waiting_for_input', 'waiting_for_approval'] as string[]).includes(latestTask.status as string)) return null;
 
   const emails = latestTask.output?.bd_agent || [];
   const hasPlaceholders = emails.some(e => e.to === 'research-needed@placeholder.com');

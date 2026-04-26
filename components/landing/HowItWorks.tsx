@@ -32,7 +32,7 @@ export const HowItWorks = () => {
           viewport={{ once: true, margin: "-100px" }}
           className="font-mono text-[13px] text-[var(--accent-violet)] mb-4 tracking-wider"
         >
-          {"// section — how it works"}
+          {`// section — how it works`}
         </m.div>
         <m.h2
           id="how-it-works-heading"
