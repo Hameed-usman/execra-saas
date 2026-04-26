@@ -11,7 +11,8 @@ export async function GET() {
     const tenantId = (session.user as any).tenantId;
 
     try {
-      const response = await fetch(`http://localhost:8000/tasks?tenant_id=${tenantId}`, {
+      const agentServiceUrl = process.env.AGENT_SERVICE_URL || 'http://localhost:8000';
+      const response = await fetch(`${agentServiceUrl}/tasks?tenant_id=${tenantId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

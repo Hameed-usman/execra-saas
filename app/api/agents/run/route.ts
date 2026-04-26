@@ -18,7 +18,8 @@ export async function POST(req: Request) {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/agent/run', {
+      const agentServiceUrl = process.env.AGENT_SERVICE_URL || 'http://localhost:8000';
+      const response = await fetch(`${agentServiceUrl}/agent/run`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

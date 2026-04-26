@@ -14,7 +14,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const response = await fetch(`http://localhost:8000/tasks/${id}/approve`, {
+    const agentServiceUrl = process.env.AGENT_SERVICE_URL || 'http://localhost:8000';
+    const response = await fetch(`${agentServiceUrl}/tasks/${id}/approve`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
     });

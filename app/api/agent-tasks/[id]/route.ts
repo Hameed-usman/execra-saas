@@ -16,7 +16,8 @@ export async function PATCH(
     const body = await req.json();
 
     try {
-      const response = await fetch(`http://localhost:8000/tasks/${id}`, {
+      const agentServiceUrl = process.env.AGENT_SERVICE_URL || 'http://localhost:8000';
+      const response = await fetch(`${agentServiceUrl}/tasks/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
