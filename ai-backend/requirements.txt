@@ -20,3 +20,6 @@ langchain-groq
 langchain-google-genai
 psycopg2-binary
 langchain-tavily
+pinecone-client
+sentence-transformers
+torch
