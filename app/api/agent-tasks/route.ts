@@ -12,6 +12,8 @@ export async function GET() {
 
     try {
       const agentServiceUrl = process.env.AGENT_SERVICE_URL || 'http://localhost:8000';
+      console.log(`[AGENT_TASKS] Fetching from: ${agentServiceUrl}/tasks?tenant_id=${tenantId}`);
+      
       const response = await fetch(`${agentServiceUrl}/tasks?tenant_id=${tenantId}`, {
         method: 'GET',
         headers: {
@@ -20,18 +22,25 @@ export async function GET() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: 'Unknown service error' }));
+        console.error('[AGENT_TASKS_SERVICE_ERROR]', errorData);
         return NextResponse.json(errorData, { status: response.status });
       }
 
       const tasks = await response.json();
       return NextResponse.json(tasks as AgentTask[]);
-    } catch (fetchError) {
-      console.error('[AGENT_TASKS_FETCH_ERROR]', fetchError);
+    } catch (fetchError: any) {
+      console.error('[AGENT_TASKS_FETCH_ERROR]', {
+        message: fetchError.message,
+        code: fetchError.code,
+        url: process.env.AGENT_SERVICE_URL
+      });
+      
       return NextResponse.json(
         { 
           error: 'Agent service temporarily unavailable', 
-          code: 'AGENT_OFFLINE' 
+          code: 'AGENT_OFFLINE',
+          details: fetchError.message
         }, 
         { status: 503 }
       );

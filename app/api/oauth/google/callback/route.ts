@@ -4,8 +4,12 @@ import { db } from '@/lib/db';
 import { encrypt } from '@/lib/encryption';
 
 export async function GET(req: Request) {
-  const origin = new URL(req.url).origin;
+  const url = new URL(req.url);
+  const origin = url.origin;
   const nextAuthUrl = process.env.NEXTAUTH_URL || origin;
+
+  console.log('[GOOGLE_OAUTH_CALLBACK] Request origin:', origin);
+  console.log('[GOOGLE_OAUTH_CALLBACK] Using NextAuth URL:', nextAuthUrl);
   
   try {
     const { searchParams } = new URL(req.url);

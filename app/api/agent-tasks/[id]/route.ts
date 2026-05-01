@@ -17,6 +17,8 @@ export async function PATCH(
 
     try {
       const agentServiceUrl = process.env.AGENT_SERVICE_URL || 'http://localhost:8000';
+      console.log(`[AGENT_TASK_UPDATE] Patching task ${id} at: ${agentServiceUrl}/tasks/${id}`);
+
       const response = await fetch(`${agentServiceUrl}/tasks/${id}`, {
         method: 'PATCH',
         headers: {
@@ -26,18 +28,25 @@ export async function PATCH(
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: 'Unknown service error' }));
+        console.error('[AGENT_TASK_UPDATE_SERVICE_ERROR]', errorData);
         return NextResponse.json(errorData, { status: response.status });
       }
 
       const data = await response.json();
       return NextResponse.json(data);
-    } catch (fetchError) {
-      console.error('[AGENT_TASK_UPDATE_FETCH_ERROR]', fetchError);
+    } catch (fetchError: any) {
+      console.error('[AGENT_TASK_UPDATE_FETCH_ERROR]', {
+        message: fetchError.message,
+        code: fetchError.code,
+        url: process.env.AGENT_SERVICE_URL
+      });
+
       return NextResponse.json(
         { 
           error: 'Agent service temporarily unavailable', 
-          code: 'AGENT_OFFLINE' 
+          code: 'AGENT_OFFLINE',
+          details: fetchError.message
         }, 
         { status: 503 }
       );

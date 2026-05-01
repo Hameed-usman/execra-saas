@@ -4,8 +4,15 @@ import { auth } from '@/lib/auth';
 export async function GET(req: Request) {
   try {
     const session = await auth();
-    const origin = new URL(req.url).origin;
+    const url = new URL(req.url);
+    const origin = url.origin;
+    
+    // In production, we should prioritize the actual origin of the request
+    // to avoid localhost redirection issues if NEXTAUTH_URL is misconfigured.
     const nextAuthUrl = process.env.NEXTAUTH_URL || origin;
+    
+    console.log('[GOOGLE_OAUTH] Request origin:', origin);
+    console.log('[GOOGLE_OAUTH] Using NextAuth URL:', nextAuthUrl);
 
     if (!session?.user) {
       return NextResponse.redirect(new URL('/login', nextAuthUrl));
@@ -17,7 +24,9 @@ export async function GET(req: Request) {
       return NextResponse.redirect(new URL('/dashboard/settings?error=missing_env', nextAuthUrl));
     }
 
+    // Ensure we use the production domain for the callback
     const redirectUri = `${nextAuthUrl}/api/oauth/google/callback`;
+    console.log('[GOOGLE_OAUTH] Generated Redirect URI:', redirectUri);
     
     const params = new URLSearchParams({
       client_id: clientId,

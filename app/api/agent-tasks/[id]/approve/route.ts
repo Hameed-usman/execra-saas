@@ -15,13 +15,16 @@ export async function PATCH(
     }
 
     const agentServiceUrl = process.env.AGENT_SERVICE_URL || 'http://localhost:8000';
+    console.log(`[AGENT_APPROVE] Approving task ${id} at: ${agentServiceUrl}/tasks/${id}/approve`);
+
     const response = await fetch(`${agentServiceUrl}/tasks/${id}/approve`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = await response.json().catch(() => ({ error: 'Unknown service error' }));
+      console.error('[AGENT_APPROVE_SERVICE_ERROR]', errorData);
       return NextResponse.json(errorData, { status: response.status });
     }
 
@@ -29,13 +32,22 @@ export async function PATCH(
     return NextResponse.json(data as ApproveResponse);
 
   } catch (err: any) {
-    if (err.cause?.code === 'ECONNREFUSED') {
+    console.error('[AGENT_APPROVE_FETCH_ERROR]', {
+      message: err.message,
+      code: err.code || err.cause?.code,
+      url: process.env.AGENT_SERVICE_URL
+    });
+
+    if (err.cause?.code === 'ECONNREFUSED' || err.code === 'ECONNREFUSED') {
       return NextResponse.json(
-        { error: 'Agent service offline', code: 'AGENT_OFFLINE' },
+        { 
+          error: 'Agent service offline', 
+          code: 'AGENT_OFFLINE',
+          details: err.message
+        },
         { status: 503 },
       );
     }
-    console.error('[AGENT_APPROVE_ERROR]', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error', details: err.message }, { status: 500 });
   }
 }
