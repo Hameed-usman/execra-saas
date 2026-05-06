@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, User, Mail, Lock, Building2, Zap, Brain, TrendingUp, ChevronRight } from "lucide-react";
+import { signIn } from "next-auth/react";
 
 function PasswordStrengthBar({ password }: { password: string }) {
   const getStrength = (p: string) => {
@@ -71,6 +72,20 @@ export default function SignupPage() {
         setLoading(false);
         return;
       }
+
+      const signInRes = await signIn("credentials", {
+        redirect: false,
+        email: form.email,
+        password: form.password,
+      });
+
+      if (signInRes?.error) {
+        setError("Account created but auto-login failed. Please sign in.");
+        setLoading(false);
+        setTimeout(() => router.push("/login"), 1500);
+        return;
+      }
+
       setSuccess(true);
       setTimeout(() => router.push("/onboarding"), 1200);
     } catch {

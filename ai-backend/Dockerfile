@@ -18,5 +18,6 @@ COPY . .
 # Expose the port
 EXPOSE 8000
 
-# Start the application using shell form to ensure $PORT is expanded correctly
-CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
+# Start the application. Azure App Service will set the PORT environment variable.
+# We default to 8000 if it's not set.
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
