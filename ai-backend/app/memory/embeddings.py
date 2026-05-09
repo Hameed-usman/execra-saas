@@ -1,25 +1,24 @@
-import asyncio
-from sentence_transformers import SentenceTransformer
+import httpx
+import os
 from typing import List
 
-# Load model once at module level to avoid reloading on every request
-# Model "all-mpnet-base-v2" produces 768-dimensional vectors
-# Dimensions must match Pinecone index configuration (768)
-model = SentenceTransformer("all-mpnet-base-v2")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 async def get_embedding(text: str) -> List[float]:
     """
-    Converts a string of text into a vector embedding.
-    Uses sentence-transformers locally.
+    Converts text to embedding using Groq API.
     """
-    loop = asyncio.get_running_loop()
-    
-    # SentenceTransformer.encode is synchronous, so we run it in an executor
-    # to avoid blocking the main event loop.
-    # We convert the resulting numpy array to a plain list of floats.
-    embedding = await loop.run_in_executor(
-        None, 
-        lambda: model.encode(text).tolist()
-    )
-    
-    return embedding
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://api.groq.com/openai/v1/embeddings",
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "nomic-embed-text-v1.5",
+                "input": text
+            }
+        )
+        data = response.json()
+        return data["data"][0]["embedding"]
