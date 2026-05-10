@@ -12,8 +12,12 @@ db_url = settings.DATABASE_URL
 if db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-# Create the async engine
-engine = create_async_engine(db_url, echo=False)
+# Create the async engine with SSL required for Neon
+engine = create_async_engine(
+    db_url, 
+    echo=False,
+    connect_args={"ssl": True}
+)
 
 # Create the async session factory
 AsyncSessionLocal = async_sessionmaker(

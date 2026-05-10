@@ -88,7 +88,7 @@ async def approve_task(task_id: str, db: AsyncSession = Depends(get_db)):
             skipped=0,
             results=[],
             task_id=task_id,
-            message="No emails to send — agent found no investors"
+            message="No emails to send — agent generated no drafts"
         )
 
     emails = task.output["bd_agent"]

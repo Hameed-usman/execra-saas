@@ -22,4 +22,5 @@ psycopg2-binary
 langchain-tavily
 pinecone
 torch
+tenacity
 

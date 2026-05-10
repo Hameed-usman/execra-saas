@@ -6,12 +6,24 @@ class AgentState(TypedDict):
     tenant_id: str
     task_id: str  # DB row ID — used for mid-run DB updates
 
-    # Planning
-    sub_tasks: List[dict]
+    # Orchestration & Memory
+    intent: str
+    entity_type: str
+    workflow_steps: List[str]
     current_agent: str
 
-    # Agent outputs
+    # Execution Data
+    extracted_entities: List[Dict[str, Any]]
+    drafted_emails: List[Dict[str, Any]]
+    
+    # Observability & Tracing (Phase 2)
+    execution_metadata: Dict[str, Any]  # Stores latency, token usage, model info
+
+    # Legacy Compatibility (to avoid breaking current frontend polling structure)
     agent_outputs: Dict[str, Any]
+
+    # Validation & Context
+    critic_evaluations: List[Dict[str, Any]]
     critic_feedback: str
     retry_count: int
     final_output: str
@@ -20,8 +32,8 @@ class AgentState(TypedDict):
     # ─────────────────────────────────────────────────────────────────
     # 'running'           → pipeline is active
     # 'approved'          → critic signed off; emails ready to send
-    # 'retry'             → critic rejected; bd_agent will be re-run
-    # 'waiting_for_input' → no investor emails found; user must supply
+    # 'retry'             → critic rejected; agent will be re-run
+    # 'waiting_for_input' → human intervention needed
     # 'failed'            → unrecoverable error; pipeline terminated
     # 'sent'              → emails dispatched (set by approval endpoint)
     # 'partial'           → some emails sent, some failed

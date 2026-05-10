@@ -104,7 +104,7 @@ async def run_agent(
     new_task = AgentTask(
         tenantId=request.tenant_id,
         goal=request.goal,
-        agentType="bd_agent",
+        agentType="dynamic_agent",
         status="pending",
         output={"step_log": ["⏳ Task queued. Pipeline starting shortly..."]},
         retryCount=0,
@@ -119,9 +119,14 @@ async def run_agent(
         "goal": request.goal,
         "tenant_id": request.tenant_id,
         "task_id": task_id,
-        "sub_tasks": [],
+        "intent": "",
+        "entity_type": "",
+        "workflow_steps": [],
         "current_agent": "",
+        "extracted_entities": [],
+        "drafted_emails": [],
         "agent_outputs": {},
+        "critic_evaluations": [],
         "critic_feedback": "",
         "retry_count": 0,
         "final_output": "",
@@ -172,6 +177,7 @@ async def process_agent_graph(task_id: str, initial_state: dict):
             current_output = {
                 **agent_outputs,
                 "step_log": node_state.get("step_log", []),
+                "execution_metadata": node_state.get("execution_metadata", {}),
             }
 
             current_status = node_state.get("status", "running")
@@ -210,6 +216,7 @@ async def process_agent_graph(task_id: str, initial_state: dict):
     final_output = {
         **agent_outputs,
         "step_log": final_state.get("step_log", []),
+        "execution_metadata": final_state.get("execution_metadata", {}),
     }
 
     if final_state.get("user_prompt"):
