@@ -1,39 +1,33 @@
-name: Deploy FastAPI to Azure
+name: Deploy AI Backend to Azure
 
 on:
   push:
     branches:
-      - main  # Change this to your default branch name if different
+      - main
     paths:
       - 'ai-backend/**'
-      - '.github/workflows/azure-deploy.yml'
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Code checkout
+        uses: actions/checkout@v4
 
-    - name: Log in to Azure
-      uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Python setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    - name: Log in to Azure Container Registry
-      run: |
-        az acr login --name ${{ secrets.ACR_NAME }}
+      - name: Dependencies install
+        run: |
+          cd ai-backend
+          pip install -r requirements.txt
 
-    - name: Build and Push Docker Image
-      run: |
-        docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/ai-backend:${{ github.sha }} ./ai-backend
-        docker push ${{ secrets.ACR_LOGIN_SERVER }}/ai-backend:${{ github.sha }}
-        docker tag ${{ secrets.ACR_LOGIN_SERVER }}/ai-backend:${{ github.sha }} ${{ secrets.ACR_LOGIN_SERVER }}/ai-backend:latest
-        docker push ${{ secrets.ACR_LOGIN_SERVER }}/ai-backend:latest
-
-    - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v3
-      with:
-        app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-        images: '${{ secrets.ACR_LOGIN_SERVER }}/ai-backend:latest'
+      - name: Azure par deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: execra-ai-backend
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./ai-backend
